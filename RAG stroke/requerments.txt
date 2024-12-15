@@ -1,0 +1,10 @@
+langchain-together
+langchain
+langchain-core
+langchain-community
+requests
+beautifulsoup4
+PyPDF2
+gtts
+speechrecognition
+uuid
