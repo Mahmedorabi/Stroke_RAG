@@ -67,7 +67,6 @@ def bot_func(rag_chain, user_input, session_id):
         if answer_chunk := chunk.get("answer"):
             yield answer_chunk
 
-@st.cache_resource
 def create_bot_for_selected_bot(name, embeddings, vdb_dir, sys_prompt_dir):
     """Create a bot for the selected configuration."""
     rag_chain = create_conversational_rag_chain(
