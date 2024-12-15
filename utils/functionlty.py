@@ -13,6 +13,8 @@ from langchain_community.chat_message_histories import StreamlitChatMessageHisto
 
 msgs = StreamlitChatMessageHistory(key="special_app_key")
 
+
+
 def read_db(filepath: str, embeddings_name):
     embeddings = HuggingFaceBgeEmbeddings(model_name=embeddings_name)
     vectordb = Chroma(persist_directory=filepath, embedding_function=embeddings)

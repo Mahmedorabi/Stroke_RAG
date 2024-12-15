@@ -87,11 +87,13 @@ def create_bot_for_selected_bot(name, embeddings, vdb_dir, sys_prompt_dir):
 
 bot = create_bot_for_selected_bot(
     embeddings="BAAI/bge-base-en-v1.5",
-    vdb_dir="/home/mohammedorabi2002/Graduation_projects/RAG stroke/Stroke_vdb",
-    sys_prompt_dir="/home/mohammedorabi2002/Graduation_projects/RAG stroke/assist/prompt.txt",
+    vdb_dir="Stroke_vdb",
+    sys_prompt_dir="assist/prompt.txt",
     name = "stroke RAG"
 )
-logo_path = "/home/mohammedorabi2002/Graduation_projects/RAG stroke/assist/download-removebg-preview.png"
+
+
+logo_path = "assist/download-removebg-preview.png"
 if not os.path.exists(logo_path):
     st.error(f"Logo file not found at: {logo_path}")
     st.stop()
