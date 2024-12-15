@@ -9,7 +9,7 @@ import os
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_community.chat_message_histories import StreamlitChatMessageHistory
 
-llm = ChatTogether(model="meta-llama/Llama-3.3-70B-Instruct-Turbo",temperature=0.0,api_key="1b4b0c2624f2a3f595a50d4da9424898a53a23f824fda9b1651dfa895edfa2ac")
+llm = ChatTogether(model="meta-llama/Llama-3.3-70B-Instruct-Turbo",temperature=0.0)
 
 msgs = StreamlitChatMessageHistory(key = "special_app_key")
 
