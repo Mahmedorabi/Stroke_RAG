@@ -45,9 +45,10 @@ user_input = st.chat_input(placeholder="Your message")
 user_input_2 = user_input
 
 if uploaded_file is not None:
-    text = analysis_text(uploaded_file)
+    text = extract_pdf_text(uploaded_file)
+    final_text = analysis_text(text)
     if user_input:
-        user_input += text
+        user_input += final_text
 
 for sender, message in st.session_state.chat_history:
     with st.chat_message("user" if sender == "you" else "assistant"):
