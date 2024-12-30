@@ -80,7 +80,9 @@ def extract_pdf_text(file_object):
         text += page.extract_text()
     return str(text)
 
-def analysis_text(text: str):
+
+def analysis_text(text: str, file_object):
+    text = extract_pdf_text(file_object)
 
     detailed_prompt = f"""
     You are a medical report analysis assistant. Your task is to:
