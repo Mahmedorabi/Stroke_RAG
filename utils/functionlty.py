@@ -7,7 +7,6 @@ from langchain.vectorstores import Chroma
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.chains import create_history_aware_retriever, create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
-from langchain.schema import Document
 from langchain_community.chat_message_histories import StreamlitChatMessageHistory
 import PyPDF2
 from langchain_together import ChatTogether

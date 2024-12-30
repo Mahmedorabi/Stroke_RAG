@@ -1,9 +1,6 @@
 from utils.functionlty import analysis_text, extract_pdf_text, bot_func, create_bot_for_selected_bot
 import streamlit as st
-from langchain_core.chat_history import BaseChatMessageHistory
-from langchain_together import ChatTogether
 from uuid import uuid4
-import PyPDF2
 import base64
 import os
 
