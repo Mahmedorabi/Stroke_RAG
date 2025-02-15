@@ -12,27 +12,27 @@ bot = create_bot_for_selected_bot(
 )
 
 
-logo_path = "assist/download-removebg-preview.png"
-if not os.path.exists(logo_path):
-    st.error(f"Logo file not found at: {logo_path}")
-    st.stop()
+# logo_path = "assist/download-removebg-preview.png"
+# if not os.path.exists(logo_path):
+#     st.error(f"Logo file not found at: {logo_path}")
+#     st.stop()
 
 
-@st.cache_resource
-def get_base64_encoded_image(image_path):
-    with open(image_path, "rb") as img_file:
-        return base64.b64encode(img_file.read()).decode()
+# @st.cache_resource
+# def get_base64_encoded_image(image_path):
+#     with open(image_path, "rb") as img_file:
+#         return base64.b64encode(img_file.read()).decode()
 
-encoded_logo = get_base64_encoded_image(logo_path)
-st.markdown(
-    f"""
-    <div style="display: flex; align-items: center;">
-        <img src="data:image/png;base64,{encoded_logo}" alt="Logo" style="width:70px; margin-right: 10px;">
-        <h1>Stroke Chatbots </h1>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+# encoded_logo = get_base64_encoded_image(logo_path)
+# st.markdown(
+#     f"""
+#     <div style="display: flex; align-items: center;">
+#         <img src="data:image/png;base64,{encoded_logo}" alt="Logo" style="width:70px; margin-right: 10px;">
+#         <h1>Stroke Chatbots </h1>
+#     </div>
+#     """,
+#     unsafe_allow_html=True,
+# )
 
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []

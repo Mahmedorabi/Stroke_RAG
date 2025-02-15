@@ -1,7 +1,7 @@
-__import__("pysqlite3")
-import sys
+# __import__("pysqlite3")
+# import sys
 
-sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
+# sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
 from langchain.embeddings import HuggingFaceBgeEmbeddings
 from langchain.vectorstores import Chroma
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
@@ -14,7 +14,7 @@ from langchain_core.runnables.history import RunnableWithMessageHistory
 
 
 msgs = StreamlitChatMessageHistory(key="special_app_key")
-llm = ChatTogether(model="meta-llama/Llama-3.3-70B-Instruct-Turbo",temperature=0.0)
+llm = ChatTogether(model="meta-llama/Llama-3.3-70B-Instruct-Turbo",temperature=0.0,api_key="3dfa2e31d4d2d1e7c7751a34ccad57a494bd4bca8e045164832cd900a75f49ba")
 
 
 
@@ -123,8 +123,11 @@ def bot_func(rag_chain, user_input, session_id):
     for chunk in rag_chain.stream(
         {"input": user_input}, config={"configurable": {"session_id": session_id}}
     ):
-        if answer_chunk := chunk.get("answer"):
-            yield answer_chunk
+        if isinstance(chunk, str):  # Handle string responses
+            yield {"answer": chunk}
+        elif isinstance(chunk, dict):  # Handle dictionary responses
+            if answer_chunk := chunk.get("answer"):
+                yield {"answer": answer_chunk}
 
 def create_bot_for_selected_bot(name, embeddings, vdb_dir, sys_prompt_dir):
     """Create a bot for the selected configuration."""
