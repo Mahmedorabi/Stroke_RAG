@@ -14,7 +14,7 @@ from langchain_core.runnables.history import RunnableWithMessageHistory
 
 
 msgs = StreamlitChatMessageHistory(key="special_app_key")
-llm = ChatTogether(model="meta-llama/Llama-3.3-70B-Instruct-Turbo",temperature=0.0,api_key="3dfa2e31d4d2d1e7c7751a34ccad57a494bd4bca8e045164832cd900a75f49ba")
+llm = ChatTogether(model="meta-llama/Llama-3.3-70B-Instruct-Turbo",temperature=0.0,api_key="")
 
 
 
