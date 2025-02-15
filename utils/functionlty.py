@@ -11,10 +11,11 @@ from langchain_community.chat_message_histories import StreamlitChatMessageHisto
 import PyPDF2
 from langchain_together import ChatTogether
 from langchain_core.runnables.history import RunnableWithMessageHistory
+import re
 
 
 msgs = StreamlitChatMessageHistory(key="special_app_key")
-llm = ChatTogether(model="meta-llama/Llama-3.3-70B-Instruct-Turbo",temperature=0.0,api_key="")
+llm = ChatTogether(model="meta-llama/Llama-3.3-70B-Instruct-Turbo",temperature=0.0,api_key="3dfa2e31d4d2d1e7c7751a34ccad57a494bd4bca8e045164832cd900a75f49ba")
 
 
 
@@ -119,7 +120,9 @@ def analysis_text(text: str):
     """
     return detailed_prompt
 
+
 def bot_func(rag_chain, user_input, session_id):
+    # Stream the response from the rag_chain
     for chunk in rag_chain.stream(
         {"input": user_input}, config={"configurable": {"session_id": session_id}}
     ):
