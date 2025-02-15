@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Assistant AI</title>
+    <style>
+        :root {
+            --primary-color: #2A5C82;
+            --secondary-color: #5BA4E6;
+            --background-color: #F5F9FF;
+            --text-color: #333;
+            --success-color: #28a745;
+            --error-color: #dc3545;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: var(--primary-color);
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .upload-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 2px dashed var(--primary-color);
+            transition: all 0.3s ease;
+        }
+
+        .upload-section:hover {
+            border-color: var(--secondary-color);
+            background: #fff;
+        }
+
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .chat-box {
+            height: 500px;
+            border: 2px solid var(--primary-color);
+            border-radius: 10px;
+            padding: 20px;
+            overflow-y: auto;
+            background: #fff;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 15px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .message.user {
+            background: var(--primary-color);
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 5px;
+        }
+
+        .message.assistant {
+            background: #e9ecef;
+            color: var(--text-color);
+            margin-right: auto;
+            border-bottom-left-radius: 5px;
+        }
+
+        /* Markdown Styles */
+        .md-header {
+            color: var(--primary-color);
+            margin: 15px 0;
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 5px;
+        }
+
+        .md-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .md-table th {
+            background: var(--primary-color);
+            color: white;
+            padding: 12px;
+            position: sticky;
+            top: 0;
+            border-bottom: 3px solid var(--secondary-color);
+        }
+
+        .md-table td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            white-space: normal;
+        }
+
+        .md-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        .note-box {
+            background: #fff9e6;
+            border-left: 4px solid #ffeb3b;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"], input[type="file"] {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid var(--primary-color);
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(43, 92, 130, 0.3);
+        }
+
+        #uploadStatus {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: var(--success-color);
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: var(--error-color);
+            border: 1px solid #f5c6cb;
+        }
+
+        .status-uploading {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            .chat-box {
+                height: 400px;
+            }
+            .message {
+                max-width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Medical Assistant AI</h1>
+            <p>Upload medical reports and get instant analysis</p>
+        </div>
+
+        <div class="upload-section">
+            <input type="file" id="fileInput" accept="application/pdf" hidden>
+            <div class="input-group">
+                <input type="text" id="fileName" placeholder="Select PDF file" readonly>
+                <button onclick="document.getElementById('fileInput').click()">Browse</button>
+                <button onclick="uploadFile()">Analyze PDF</button>
+            </div>
+            <div id="uploadStatus"></div>
+        </div>
+
+        <div class="chat-container">
+            <div class="chat-box" id="chatBox"></div>
+            <div class="input-group">
+                <input type="text" id="userInput" placeholder="Type your medical question...">
+                <button onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // File input handler
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            document.getElementById('fileName').value = e.target.files[0].name;
+        });
+
+        async function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const uploadStatus = document.getElementById('uploadStatus');
+            
+            if (!fileInput.files.length) {
+                showStatus('Please select a PDF file first.', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                showStatus('Analyzing PDF...', 'uploading');
+                
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showStatus('PDF analyzed successfully! Ready for questions.', 'success');
+                } else {
+                    showStatus(data.detail || 'Analysis failed', 'error');
+                }
+            } catch (error) {
+                showStatus('Network error - please try again', 'error');
+                console.error('Upload error:', error);
+            }
+        }
+
+        async function sendMessage() {
+            const userInput = document.getElementById('userInput');
+            const chatBox = document.getElementById('chatBox');
+            const message = userInput.value.trim();
+            
+            if (!message) return;
+
+            // Add user message
+            addMessage(message, 'user');
+            userInput.value = '';
+
+            try {
+                // Add temporary assistant message
+                const assistantDiv = addMessage('...', 'assistant');
+                let fullResponse = '';
+
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_input: message })
+                });
+
+                if (response.ok) {
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        
+                        const chunk = decoder.decode(value);
+                        const lines = chunk.split('\n\n');
+                        
+                        for (const line of lines) {
+                            if (line.startsWith('data: ')) {
+                                const text = line.replace('data: ', '').trim();
+                                fullResponse += text + ' ';
+                                
+                                // Process accumulated response
+                                assistantDiv.innerHTML = `
+                                    <div class="message-header">Medical Assistant</div>
+                                    <div class="message-content">${formatResponse(fullResponse)}</div>
+                                `;
+                                
+                                chatBox.scrollTop = chatBox.scrollHeight;
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage('Sorry, there was an error processing your request.', 'assistant');
+            }
+        }
+
+        function formatResponse(text) {
+            // Preprocess medical terms
+            text = text
+                .replace(/([a-zA-Z])\s+(?=[A-Z])/g, '$1')  // Fix split words
+                .replace(/\s*\|\s*/g, '|')                 // Normalize table columns
+                .replace(/\s*-\s*/g, '-');                 // Normalize list markers
+
+            // Convert Markdown to HTML
+            return text
+                .replace(/^### (.*$)/gim, '<h3 class="md-header">$1</h3>')
+                .replace(/^## (.*$)/gim, '<h2 class="md-header">$1</h2>')
+                .replace(/^# (.*$)/gim, '<h1 class="md-header">$1</h1>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/(\|[^\n]+\|)\n(\|:?-+:?)+\n((\|.*\|(\n)?)+)/g, (match, header, separator, rows) => {
+                    return `<table class="md-table">
+                        <thead>${formatTableRow(header)}</thead>
+                        <tbody>${rows.split('\n').map(row => formatTableRow(row)).join('')}</tbody>
+                    </table>`;
+                })
+                .replace(/(-|\*) (.*)/g, '<li>$2</li>')
+                .replace(/<li>/g, '<ul><li>')
+                .replace(/<\/li>/g, '</li></ul>')
+                .replace(/Note :(.*?)(\n\n|$)/gs, '<div class="note-box">$1</div>');
+        }
+
+        function formatTableRow(row) {
+            return `<tr>${
+                row.split('|')
+                   .slice(1, -1)
+                   .map(cell => `<td>${cell.trim().replace(/([a-z])([A-Z])/g, '$1 $2')}</td>`)
+                   .join('')
+            }</tr>`;
+        }
+
+        function addMessage(text, sender) {
+            const chatBox = document.getElementById('chatBox');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${sender}`;
+            
+            msgDiv.innerHTML = `
+                <div class="message-header">${sender === 'user' ? 'You' : 'Medical Assistant'}</div>
+                <div class="message-content">${sender === 'user' ? text : formatResponse(text)}</div>
+            `;
+            
+            chatBox.appendChild(msgDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            return msgDiv;
+        }
+
+        function showStatus(text, type) {
+            const status = document.getElementById('uploadStatus');
+            status.className = '';
+            status.textContent = text;
+            status.classList.add(`status-${type}`);
+        }
+    </script>
+</body>
+</html>
