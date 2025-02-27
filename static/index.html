@@ -35,6 +35,34 @@
             border-radius: 15px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
             padding: 30px;
+            display: flex;
+            gap: 20px;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: var(--primary-color);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+        .sidebar h2 {
+            margin-bottom: 20px;
+        }
+
+        #chatSessions {
+            list-style-type: none;
+        }
+
+        #chatSessions li {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--secondary-color);
+        }
+
+        #chatSessions li:hover {
+            background-color: var(--secondary-color);
         }
 
         .header {
@@ -63,6 +91,7 @@
         }
 
         .chat-container {
+            flex: 1;
             display: flex;
             flex-direction: column;
             gap: 20px;
@@ -99,48 +128,6 @@
             border-bottom-left-radius: 5px;
         }
 
-        /* Markdown Styles */
-        .md-header {
-            color: var(--primary-color);
-            margin: 15px 0;
-            border-bottom: 2px solid var(--secondary-color);
-            padding-bottom: 5px;
-        }
-
-        .md-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-
-        .md-table th {
-            background: var(--primary-color);
-            color: white;
-            padding: 12px;
-            position: sticky;
-            top: 0;
-            border-bottom: 3px solid var(--secondary-color);
-        }
-
-        .md-table td {
-            padding: 12px;
-            border-bottom: 1px solid #eee;
-            white-space: normal;
-        }
-
-        .md-table tr:nth-child(even) {
-            background-color: #f8f9fa;
-        }
-
-        .note-box {
-            background: #fff9e6;
-            border-left: 4px solid #ffeb3b;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 4px;
-        }
-
         .input-group {
             display: flex;
             gap: 10px;
@@ -169,6 +156,31 @@
             box-shadow: 0 5px 15px rgba(43, 92, 130, 0.3);
         }
 
+        #voiceButton {
+            padding: 12px;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        #voiceButton.recording {
+            background: var(--error-color);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
         #uploadStatus {
             margin-top: 10px;
             padding: 10px;
@@ -195,14 +207,14 @@
             border: 1px solid #ffeeba;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
         @media (max-width: 768px) {
             .container {
                 padding: 15px;
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                height: auto;
             }
             .chat-box {
                 height: 400px;
@@ -215,36 +227,162 @@
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>Medical Assistant AI</h1>
-            <p>Upload medical reports and get instant analysis</p>
+        <div class="sidebar">
+            <h2>Chat Sessions</h2>
+            <ul id="chatSessions"></ul>
         </div>
-
-        <div class="upload-section">
-            <input type="file" id="fileInput" accept="application/pdf" hidden>
-            <div class="input-group">
-                <input type="text" id="fileName" placeholder="Select PDF file" readonly>
-                <button onclick="document.getElementById('fileInput').click()">Browse</button>
-                <button onclick="uploadFile()">Analyze PDF</button>
+        <div class="main-content">
+            <div class="header">
+                <h1>Medical Assistant AI</h1>
+                <p>Upload medical reports and get instant analysis</p>
             </div>
-            <div id="uploadStatus"></div>
-        </div>
 
-        <div class="chat-container">
-            <div class="chat-box" id="chatBox"></div>
-            <div class="input-group">
-                <input type="text" id="userInput" placeholder="Type your medical question...">
-                <button onclick="sendMessage()">Send</button>
+            <div class="upload-section">
+                <input type="file" id="fileInput" accept="application/pdf" hidden>
+                <div class="input-group">
+                    <input type="text" id="fileName" placeholder="Select PDF file" readonly>
+                    <button onclick="document.getElementById('fileInput').click()">Browse</button>
+                    <button onclick="uploadFile()">Analyze PDF</button>
+                </div>
+                <div id="uploadStatus"></div>
+            </div>
+
+            <div class="chat-container">
+                <div class="chat-box" id="chatBox"></div>
+                <div class="input-group">
+                    <input type="text" id="userInput" placeholder="Type your medical question...">
+                    <button onclick="sendMessage()">Send</button>
+                    <button onclick="startVoiceInput()" id="voiceButton">🎤</button>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
+        let isRecording = false;
+        let mediaRecorder;
+        let audioChunks = [];
+
+        // Function to start/stop voice recording
+        async function startVoiceInput() {
+            const voiceButton = document.getElementById('voiceButton');
+
+            if (!isRecording) {
+                // Start recording
+                isRecording = true;
+                voiceButton.classList.add('recording');
+                voiceButton.textContent = '⏹️';
+                audioChunks = [];
+
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    mediaRecorder.ondataavailable = (event) => {
+                        audioChunks.push(event.data);
+                    };
+                    mediaRecorder.onstop = async () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        const audioBuffer = await audioBlob.arrayBuffer();
+                        const audioContext = new AudioContext();
+                        const decodedData = await audioContext.decodeAudioData(audioBuffer);
+                        const wavBlob = new Blob([audioBufferToWav(decodedData)], { type: 'audio/wav' });
+                        const audioFile = new File([wavBlob], 'recording.wav', { type: 'audio/wav' });
+                        const transcribedText = await transcribeAudio(audioFile);
+                        if (transcribedText) {
+                            document.getElementById('userInput').value = transcribedText;
+                            sendMessage();
+                        }
+                    };
+                    mediaRecorder.start();
+                } catch (error) {
+                    console.error('Error accessing microphone:', error);
+                    showStatus('Microphone access denied. Please allow access to use voice input.', 'error');
+                    isRecording = false;
+                    voiceButton.classList.remove('recording');
+                    voiceButton.textContent = '🎤';
+                }
+            } else {
+                // Stop recording
+                isRecording = false;
+                voiceButton.classList.remove('recording');
+                voiceButton.textContent = '🎤';
+                mediaRecorder.stop();
+            }
+        }
+
+        // Function to convert AudioBuffer to WAV
+        function audioBufferToWav(buffer) {
+            const numOfChan = buffer.numberOfChannels;
+            const length = buffer.length * numOfChan * 2 + 44;
+            const bufferArray = new ArrayBuffer(length);
+            const view = new DataView(bufferArray);
+
+            // Write WAV header
+            const writeString = (view, offset, string) => {
+                for (let i = 0; i < string.length; i++) {
+                    view.setUint8(offset + i, string.charCodeAt(i));
+                }
+            };
+
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, 36 + buffer.length * numOfChan * 2, true);
+            writeString(view, 8, 'WAVE');
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, numOfChan, true);
+            view.setUint32(24, buffer.sampleRate, true);
+            view.setUint32(28, buffer.sampleRate * 2 * numOfChan, true);
+            view.setUint16(32, numOfChan * 2, true);
+            view.setUint16(34, 16, true);
+            writeString(view, 36, 'data');
+            view.setUint32(40, buffer.length * numOfChan * 2, true);
+
+            // Write PCM samples
+            let offset = 44;
+            for (let i = 0; i < buffer.numberOfChannels; i++) {
+                const channel = buffer.getChannelData(i);
+                for (let j = 0; j < channel.length; j++) {
+                    const sample = Math.max(-1, Math.min(1, channel[j]));
+                    view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+                    offset += 2;
+                }
+            }
+
+            return bufferArray;
+        }
+
+        // Function to transcribe audio
+        async function transcribeAudio(audioFile) {
+            const formData = new FormData();
+            formData.append('file', audioFile);
+            formData.append('input_language', 'English'); // Set the language dynamically if needed
+
+            try {
+                const response = await fetch('/transcribe_audio', {
+                    method: 'POST',
+                    body: formData,
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    return data.transcribed_text;
+                } else {
+                    showStatus('Transcription failed. Please try again.', 'error');
+                    return null;
+                }
+            } catch (error) {
+                console.error('Transcription error:', error);
+                showStatus('Network error - please try again', 'error');
+                return null;
+            }
+        }
+
         // File input handler
         document.getElementById('fileInput').addEventListener('change', function(e) {
             document.getElementById('fileName').value = e.target.files[0].name;
         });
 
+        // Function to upload PDF
         async function uploadFile() {
             const fileInput = document.getElementById('fileInput');
             const uploadStatus = document.getElementById('uploadStatus');
@@ -278,6 +416,7 @@
             }
         }
 
+        // Function to send a message
         async function sendMessage() {
             const userInput = document.getElementById('userInput');
             const chatBox = document.getElementById('chatBox');
@@ -333,40 +472,12 @@
             }
         }
 
+        // Function to format the bot's response
         function formatResponse(text) {
-            // Preprocess medical terms
-            text = text
-                .replace(/([a-zA-Z])\s+(?=[A-Z])/g, '$1')  // Fix split words
-                .replace(/\s*\|\s*/g, '|')                 // Normalize table columns
-                .replace(/\s*-\s*/g, '-');                 // Normalize list markers
-
-            // Convert Markdown to HTML
-            return text
-                .replace(/^### (.*$)/gim, '<h3 class="md-header">$1</h3>')
-                .replace(/^## (.*$)/gim, '<h2 class="md-header">$1</h2>')
-                .replace(/^# (.*$)/gim, '<h1 class="md-header">$1</h1>')
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .replace(/(\|[^\n]+\|)\n(\|:?-+:?)+\n((\|.*\|(\n)?)+)/g, (match, header, separator, rows) => {
-                    return `<table class="md-table">
-                        <thead>${formatTableRow(header)}</thead>
-                        <tbody>${rows.split('\n').map(row => formatTableRow(row)).join('')}</tbody>
-                    </table>`;
-                })
-                .replace(/(-|\*) (.*)/g, '<li>$2</li>')
-                .replace(/<li>/g, '<ul><li>')
-                .replace(/<\/li>/g, '</li></ul>')
-                .replace(/Note :(.*?)(\n\n|$)/gs, '<div class="note-box">$1</div>');
+            return text; // Add any formatting logic here
         }
 
-        function formatTableRow(row) {
-            return `<tr>${
-                row.split('|')
-                   .slice(1, -1)
-                   .map(cell => `<td>${cell.trim().replace(/([a-z])([A-Z])/g, '$1 $2')}</td>`)
-                   .join('')
-            }</tr>`;
-        }
-
+        // Function to add a message to the chat box
         function addMessage(text, sender) {
             const chatBox = document.getElementById('chatBox');
             const msgDiv = document.createElement('div');
@@ -382,6 +493,7 @@
             return msgDiv;
         }
 
+        // Function to show status messages
         function showStatus(text, type) {
             const status = document.getElementById('uploadStatus');
             status.className = '';
