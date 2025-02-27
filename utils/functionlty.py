@@ -11,7 +11,12 @@ from langchain_community.chat_message_histories import StreamlitChatMessageHisto
 import PyPDF2
 from langchain_together import ChatTogether
 from langchain_core.runnables.history import RunnableWithMessageHistory
-import re
+import speech_recognition as sr
+import sounddevice as sd
+import wavio
+import os
+from pathlib import Path
+
 
 
 msgs = StreamlitChatMessageHistory(key="special_app_key")
@@ -121,16 +126,23 @@ def analysis_text(text: str):
     return detailed_prompt
 
 
+# def bot_func(rag_chain, user_input, session_id):
+#     # Stream the response from the rag_chain
+#     for chunk in rag_chain.stream(
+#         {"input": user_input}, config={"configurable": {"session_id": session_id}}
+#     ):
+#         if isinstance(chunk, str):  # Handle string responses
+#             yield {"answer": chunk}
+#         elif isinstance(chunk, dict):  # Handle dictionary responses
+#             if answer_chunk := chunk.get("answer"):
+#                 yield {"answer": answer_chunk}
+
 def bot_func(rag_chain, user_input, session_id):
-    # Stream the response from the rag_chain
     for chunk in rag_chain.stream(
         {"input": user_input}, config={"configurable": {"session_id": session_id}}
     ):
-        if isinstance(chunk, str):  # Handle string responses
-            yield {"answer": chunk}
-        elif isinstance(chunk, dict):  # Handle dictionary responses
-            if answer_chunk := chunk.get("answer"):
-                yield {"answer": answer_chunk}
+        if answer_chunk := chunk.get("answer"):
+            yield answer_chunk    
 
 def create_bot_for_selected_bot(name, embeddings, vdb_dir, sys_prompt_dir):
     """Create a bot for the selected configuration."""
@@ -147,3 +159,55 @@ def create_bot_for_selected_bot(name, embeddings, vdb_dir, sys_prompt_dir):
         top_n=5
     )
     return conversational_rag_chain
+
+
+def record_audio(duration=5, sample_rate=44100):
+    try:
+        recording = sd.rec(int(duration * sample_rate),
+                           samplerate=sample_rate,
+                           channels=1,
+                           dtype='int16')
+        sd.wait()
+        # Save the file
+        temp_dir = Path("temp_audio")
+        temp_dir.mkdir(exist_ok=True)
+        
+        temp_file = temp_dir / "temp_recording.wav"
+        wavio.write(str(temp_file), recording, sample_rate, sampwidth=2)
+        
+        return str(temp_file)
+    except Exception as e:
+        return f"Error recording audio: {str(e)}"
+    
+def transcribe_audio(audio_file, input_language):
+    try:
+        # Map language selection to Google Speech Recognition language codes
+        language_codes = {
+            "Arabic": "ar-AR",
+            "English": "en-US"
+        }
+        language_code = language_codes.get(input_language, "en-US")
+        
+        recognizer = sr.Recognizer()
+        # open a audio file
+        with sr.AudioFile(audio_file) as source:
+            # Read audio content
+            audio = recognizer.record(source)
+            
+            text = recognizer.recognize_google(audio, language=language_code)
+            return text
+    except Exception as e:
+        return f"Error transcribing audio: {str(e)}"
+    finally:
+        if os.path.exists(audio_file):
+            os.remove(audio_file)
+
+def process_voice_input(input_language):
+    try:
+        audio_file = record_audio()
+        if audio_file.startswith("Error"):
+            return audio_file
+        text = transcribe_audio(audio_file, input_language)
+        return text
+    except Exception as e:
+        return f"Error processing voice input: {str(e)}"
