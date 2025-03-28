@@ -3,7 +3,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import asyncio
 from typing import Dict, List, Optional, Any
-from utils.functionlty import create_bot_for_selected_bot, bot_func, extract_pdf_text, analysis_text
+from utils.functions import create_bot_for_selected_bot, bot_func, extract_pdf_text, analysis_text
 
 app = FastAPI(title="RAG Chat Application")
 
